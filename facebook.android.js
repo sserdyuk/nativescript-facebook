@@ -61,3 +61,33 @@ function logInWithReadPermissions(permissions) {
     }
 }
 exports.logInWithReadPermissions = logInWithReadPermissions;
+
+
+exports.sdkInit = function(){
+    com.facebook.FacebookSdk.sdkInitialize(_AndroidApplication.context)
+}
+
+exports.share = function(params){
+
+    //contentURL, contentTitle, imageURL, contentDescription
+
+    var activity = _AndroidApplication.foregroundActivity
+    var builder = new com.facebook.share.model.ShareLinkContent.Builder()
+        
+    
+    if(params.contentURL)
+        builder.setContentUrl(android.net.Uri.parse(params.contentURL))
+
+    if(params.contentTitle)
+        builder.setContentTitle(params.contentTitle)
+
+    if(params.imageURL)
+        builder.setImageUrl(android.net.Uri.parse(params.imageURL))
+
+    if(params.contentDescription)
+        builder.setContentDescription(params.contentDescription)
+
+    var content = builder.build();     
+
+    com.facebook.share.widget.ShareDialog.show(activity, content)
+}
