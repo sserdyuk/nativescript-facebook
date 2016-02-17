@@ -1,0 +1,12 @@
+android { 
+    productFlavors {
+        "nativescript-facebook" {
+            dimension "nativescript-facebook"
+        }
+    }
+}
+
+dependencies {
+  compile "com.android.support:recyclerview-v7:$suppotVer"
+  compile "com.facebook.android:facebook-android-sdk:4+"
+}
