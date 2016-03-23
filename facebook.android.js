@@ -130,6 +130,9 @@ var Facebook = function(){
 
     Facebook.initSdk = function(loginBehavior){
 
+        if(this._isInit)
+            return true
+
         try {
             com.facebook.FacebookSdk.sdkInitialize(_AndroidApplication.context.getApplicationContext());
         }catch (e) {
