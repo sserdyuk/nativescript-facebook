@@ -63,12 +63,19 @@ exports.getToken = function(){
 }
 
 function toJson(entity){
+
+    console.log("## toJson " + entity)
+
     var keys = entity.keys()
     var json = {}    
     
+    console.log("## toJson key=" + key)
+
     while(keys.hasNext()){
 
         var key = keys.next()
+
+        console.log("## toJson key=" + key)
 
         json[key] = entity.opt(key).toString()        
     }
@@ -210,6 +217,8 @@ var Facebook = function(){
         var self = this
         var request = com.facebook.GraphRequest.newMeRequest(accessToken, new com.facebook.GraphRequest.GraphJSONObjectCallback({        
             onCompleted: function(entity, graphResponse) {
+
+                console.log("## Facebook onCompleted")
 
                 if(graphResponse.getError()){                    
                     self.handlerError(graphResponse.getError())
