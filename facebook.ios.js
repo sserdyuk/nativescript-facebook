@@ -1,56 +1,116 @@
-var _isInit = false;
-var mCallbackManager;
-var loginManager;
-function init(loginBehavior) {
-    loginManager = FBSDKLoginManager.alloc().init();
-    if (loginManager) {
-        loginManager.logOut();
-        if (loginBehavior) {
-            loginManager.loginBehavior = loginBehavior;
+
+var facebookApi;
+
+exports.init = function(loginBehavior) {
+    if(!facebookApi){
+        facebookApi = new Facebook()
+        facebookApi.initSdk(loginBehavior)
+    }
+}
+exports.registerCallback = function(successCallback, cancelCallback, failCallback) {
+    facebookApi.registerCallback(successCallback, cancelCallback, failCallback)
+}
+
+exports.logInWithPublishPermissions = function(permissions) {
+    facebookApi.logInWithPublishPermissions(permissions)
+}
+
+exports.logInWithReadPermissions = function(permissions) {
+    facebookApi.logInWithReadPermissions(permissions)
+}
+
+var Facebook = function(){
+
+    Facebook.logInWithPublishPermissions = function(permissions){
+        if(this._isInit){
+            this.loginManager.logInWithPublishPermissionsHandler(permissions, this._callbackManager);
         }
-        _isInit = true;
-        return true;
     }
-    else {
-        return false;
+
+    Facebook.logInWithReadPermissions = function(permissions){
+        if (this._isInit) {
+            this.loginManager.logInWithReadPermissionsHandler(permissions, this._callbackManager);
+        }        
     }
+
+    Facebook.getAccessToken = function(){
+        return FBSDKAccessToken.currentAccessToken()
+    }
+
+    Facebook.isLoggedIn = function(){
+        return this.getAccessToken() != null
+    }
+
+    Facebook.logout = function(){
+        if(this._init)
+            this.loginManager.logOut();
+    }
+
+    Facebook.initSdk = function(loginBehavior){
+        this.loginManager = FBSDKLoginManager.alloc().init();
+        if (this.loginManager) {
+            //this.loginManager.logOut();
+            if (loginBehavior) {
+                this.loginManager.loginBehavior = loginBehavior;
+            }
+            this._isInit = true;
+            return true;
+        }
+        else {
+            return false;
+        }        
+    }
+
+    Facebook.registerCallback = function(successCallback, cancelCallback, failCallback){
+
+        this._successCallback = successCallback
+        this._cancelCallback = cancelCallback
+        this._failCallback = failCallback
+        var self = this
+        if (this._isInit) {
+            this._callbackManager = function (result, error) {
+                if (error) {
+                    console.log("login error: " + error)
+                    // https://developers.facebook.com/docs/ios/errors
+                    var message = error.userInfo[FBSDKErrorDeveloperMessageKey]
+                    self._failCallback(message);
+                    return;
+                }
+                if (!result) {
+                    self._failCallback("Null error");
+                    return;
+                }
+                if (result.isCancelled) {
+                    self._cancelCallback();
+                    return;
+                }
+                if (result.token) {
+                    self._successCallback(result);
+                }
+                else {
+                    self._failCallback("Could not acquire an access token");
+                    return;
+                }
+            };
+        }
+    }
+
+    Facebook.share = function(params){
+
+    }
+
+    Facebook.doMeRequest = function(args){
+
+    }
+
+    Facebook.doGraphPathRequest = function(args){
+
+    }
+
+    Facebook.handlerError = function(error){
+
+    }
+
+    return Facebook
+
 }
-exports.init = init;
-function registerCallback(successCallback, cancelCallback, failCallback) {
-    if (_isInit) {
-        mCallbackManager = function (result, error) {
-            if (error) {
-                failCallback(error);
-                return;
-            }
-            if (!result) {
-                failCallback("Null error");
-                return;
-            }
-            if (result.isCancelled) {
-                cancelCallback();
-                return;
-            }
-            if (result.token) {
-                successCallback(result);
-            }
-            else {
-                failCallback("Could not acquire an access token");
-                return;
-            }
-        };
-    }
-}
-exports.registerCallback = registerCallback;
-function logInWithPublishPermissions(permissions) {
-    if (_isInit) {
-        loginManager.logInWithPublishPermissionsHandler(permissions, mCallbackManager);
-    }
-}
-exports.logInWithPublishPermissions = logInWithPublishPermissions;
-function logInWithReadPermissions(permissions) {
-    if (_isInit) {
-        loginManager.logInWithReadPermissionsHandler(permissions, mCallbackManager);
-    }
-}
-exports.logInWithReadPermissions = logInWithReadPermissions;
