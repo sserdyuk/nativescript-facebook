@@ -4,6 +4,13 @@
     <Label text="Facebook login" class="title"/>
     <Button text="Login" tap="onLogin" />
 
+    
+
+    <Button text="Share Text" tap="onShare" />
+
+    <Button text="Share Image" tap="onSharePhoto" />
+
     <Label text="{{ message }}" class="message" textWrap="true"/>
+
   </StackLayout>
 </Page>

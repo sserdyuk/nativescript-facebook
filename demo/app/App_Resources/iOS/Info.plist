@@ -68,12 +68,12 @@
 	  <dict>
 	  <key>CFBundleURLSchemes</key>
 	  <array>
-	    <string>fb1011519068868491</string>
+	    <string>fb{appid}}</string>
 	  </array>
 	  </dict>
 	</array>
 	<key>FacebookAppID</key>
-	<string>1011519068868491</string>
+	<string>{appid}</string>
 	<key>FacebookDisplayName</key>
 	<string>SigTurismo App</string>
 
@@ -83,6 +83,7 @@
 	  <string>fb-messenger-api</string>
 	  <string>fbauth2</string>
 	  <string>fbshareextension</string>
+	  <string>fbapi20150629</string>çç
 	</array>
 	
 </dict>
