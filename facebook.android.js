@@ -1,104 +1,6 @@
 var applicationModule = require("application");
 var _AndroidApplication = applicationModule.android;
 
-var facebookApi 
-
-exports.init = function(loginBehavior) {
-    facebookApi = new Facebook()
-    facebookApi.initSdk(loginBehavior)
-}
-
-exports.registerCallback = function(successCallback, cancelCallback, failCallback) {
-    facebookApi.registerCallback(successCallback, cancelCallback, failCallback)
-}
-
-exports.logInWithPublishPermissions = function(permissions) {
-    facebookApi.logInWithPublishPermissions(permissions)
-}
-
-exports.logInWithReadPermissions = function(permissions) {
-    facebookApi.logInWithReadPermissions(permissions)
-}
-
-exports.share = function(params){
-    facebookApi.share(params)    
-}
-
-exports.requestUserProfile = function(fields, doneCallback){   
-
-    //console.log("### accessToken.getPermissions()=" + accessToken.getPermissions())
-
-    var parameters = new android.os.Bundle();
-    parameters.putString("fields", fields);    
-
-    var accessToken = facebookApi.getAcessToken()
-
-    facebookApi.doMeRequest(accessToken, parameters, function(fbUser){
-        var json = toJson(fbUser)
-        json.token = accessToken.getToken()              
-        doneCallback(json)
-    })   
-}
-
-exports.requestBooks = function(fields, doneCallback){   
-
-    //console.log("### accessToken.getPermissions()=" + accessToken.getPermissions())
-
-    var graphPath = "/me/books.reads"
-    var accessToken = facebookApi.getAcessToken()
-
-    facebookApi.doGraphPathRequest(accessToken, graphPath, function(entities){
-        var json = toJsonrray(entities)        
-        doneCallback(json)
-    })   
-}
-
-
-exports.isLoggedIn = function(){
-    return facebookApi.isLoggedIn()
-}
-
-exports.getToken = function(){
-    facebookApi.getAcessToken()
-}
-
-function toJson(entity){
-    var keys = entity.keys()
-    var json = {}    
-    
-    while(keys.hasNext()){
-
-        var key = keys.next()
-
-        json[key] = entity.opt(key).toString()        
-    }
-
-    return json
-}
-
-function toJsonrray(entities){
-
-    var jsonArray = []
-
-    for(var j = 0; j < entities.length(); j++){
-        
-        var entity = entities[j]
-        var keys = entity.keys()
-        var json = {}
-        
-        while(keys.hasNext()){
-            var key = keys.next()
-
-            json[key] = entity.opt(key).toString()        
-        }
-
-        jsonArray.push(json)
-    }
-
-    return jsonArray
-}
-
-
 var Facebook = function(){
     
     Facebook.logInWithPublishPermissions = function(permissions) {
@@ -125,15 +27,19 @@ var Facebook = function(){
 
 
     Facebook.logout = function(){
-        this.loginManager.logOut();
+        if(this._isInit)
+            this.loginManager.logOut();
     }
 
     Facebook.initSdk = function(loginBehavior){
 
+        if(this._isInit)
+            return true
+
         try {
             com.facebook.FacebookSdk.sdkInitialize(_AndroidApplication.context.getApplicationContext());
-        }catch (e) {
-            console.log("nativescript-facebook-login: The plugin could not find the android library, try to clean the android platform");
+        }catch (error) {
+            console.log("nativescript-facebook-login: The plugin could not find the android library, try to clean the android platform. " + error);
         }
                 
         this.mCallbackManager = com.facebook.CallbackManager.Factory.create();
@@ -176,70 +82,183 @@ var Facebook = function(){
                 self.mCallbackManager.onActivityResult(requestCode, resultCode, data);
             };
         }        
-    }    
+    }   
 
-    //contentURL, contentTitle, imageURL, contentDescription
-    Facebook.share = function(params){
-        var activity = _AndroidApplication.foregroundActivity
-        var builder = new com.facebook.share.model.ShareLinkContent.Builder()            
-        
-        if(params.contentURL)
-            builder.setContentUrl(android.net.Uri.parse(params.contentURL))
+    // args = { fields, doneCallback}
+    Facebook.requestUserProfile = function(args){   
 
-        if(params.contentTitle)
-            builder.setContentTitle(params.contentTitle)
+        //console.log("### accessToken.getPermissions()=" + accessToken.getPermissions())
 
-        if(params.imageURL)
-            builder.setImageUrl(android.net.Uri.parse(params.imageURL))
+        var parameters = new android.os.Bundle();
+        if(args.fields)
+            parameters.putString("fields", args.fields);    
 
-        if(params.contentDescription)
-            builder.setContentDescription(params.contentDescription)
+        var accessToken = this.getAcessToken()
 
-        var content = builder.build();     
-
-        com.facebook.share.widget.ShareDialog.show(activity, content)        
+        this.doMeRequest(accessToken, parameters, function(fbUser){
+            var json = toJson(fbUser)
+            json.token = accessToken.getToken()              
+            args.doneCallback(json)
+        })   
     }
+
+    Facebook.requestBooks = function(fields, doneCallback){   
+
+        //console.log("### accessToken.getPermissions()=" + accessToken.getPermissions())
+
+        var graphPath = "/me/books.reads"
+        var accessToken = this.getAcessToken()
+
+        this.doGraphPathRequest(accessToken, graphPath, function(entities){
+            var json = toJsonrray(entities)        
+            doneCallback(json)
+        })   
+    }     
+
+    //url, title, content, imageUrl
+    Facebook.share = function(params){
+        try{
+            var activity = _AndroidApplication.foregroundActivity
+            var builder = new com.facebook.share.model.ShareLinkContent.Builder()            
+            
+            if(params.url)
+                builder.setContentUrl(android.net.Uri.parse(params.url))
+
+            if(params.title)
+                builder.setContentTitle(params.title)
+
+            if(params.imageUrl)
+                builder.setImageUrl(android.net.Uri.parse(params.imageUrl))
+
+            if(params.content)
+                builder.setContentDescription(params.content)
+
+            var content = builder.build();     
+
+            com.facebook.share.widget.ShareDialog.show(activity, content)   
+        }catch(error){
+            console.log(error)
+            this._failCallback(error)
+        }     
+    }
+
+    // imagePath, content, imageUrl
+    Facebook.sharePhoto = function(params){
+        try{
+            var activity = _AndroidApplication.foregroundActivity
+        
+            var builder = new com.facebook.share.model.SharePhotoContent().Builder()
+            var photo = this.createPhotoShare(params)
+            var content = builder.addPhoto(photo).build();
+
+            com.facebook.share.widget.ShareDialog.show(activity, content)  
+        }catch(error){
+            console.log(error)
+            this._failCallback(error)
+        }      
+    }  
+
+    // list of {imagePath, content, imageUrl}
+    Facebook.sharePhotos = function(args){
+        try{
+            var activity = _AndroidApplication.foregroundActivity
+            
+            var builder = new com.facebook.share.model.SharePhotoContent().Builder()
+            var photos = []
+
+            for(var i in args.list){
+                photos.push(this.createPhotoShare(args.list[i]))
+            }
+
+            for(var i in photos)
+                builder.addPhoto(photos[i])
+
+            var content = builder.build();
+
+            com.facebook.share.widget.ShareDialog.show(activity, content) 
+        }catch(error){
+            console.log(error)
+            this._failCallback(error)
+        }       
+    }  
+
+    Facebook.createPhotoShare = function(params){
+        var builder = new com.facebook.share.model.SharePhoto.Builder();
+        var bmOptions = new android.graphics.BitmapFactory.Options();
+        var bitmap
+
+        if(params.imagePath)
+            bitmap = android.graphics.BitmapFactory.decodeFile(params.imagePath, bmOptions);        
+
+        if(bitmap)
+            builder.setBitmap(bitmap);
+
+        if(params.content)
+            builder.setCaption(params.content);
+
+        if(params.content)
+            builder.setCaption(params.content);
+
+        if(params.imageUrl)
+            builder.setImageUrl(android.net.Uri.parse(params.imageUrl))
+
+        builder.setUserGenerated(true);
+
+        return builder.build();     
+    }  
 
     Facebook.doMeRequest = function(accessToken, budle, doneCallback){   
 
-        console.log("### accessToken.getPermissions()=" + accessToken.getPermissions())
+        try{
+            console.log("### accessToken.getPermissions()=" + accessToken.getPermissions())
 
-        var self = this
-        var request = com.facebook.GraphRequest.newMeRequest(accessToken, new com.facebook.GraphRequest.GraphJSONObjectCallback({        
-            onCompleted: function(entity, graphResponse) {
+            var self = this
+            var request = com.facebook.GraphRequest.newMeRequest(accessToken, new com.facebook.GraphRequest.GraphJSONObjectCallback({        
+                onCompleted: function(entity, graphResponse) {
 
-                if(graphResponse.getError()){                    
-                    self.handlerError(graphResponse.getError())
-                }else{
-                    doneCallback(entity)            
+                    console.log("## Facebook onCompleted")
+
+                    if(graphResponse.getError()){                    
+                        self.handlerError(graphResponse.getError())
+                    }else{
+                        doneCallback(entity)            
+                    }
                 }
-            }
-        }))
+            }))
 
-        if(budle)
-            request.setParameters(budle);
+            if(budle)
+                request.setParameters(budle);
 
-        request.executeAsync()
+            request.executeAsync()
+        }catch(error){
+            console.log(error)
+            this._failCallback(error)
+        }
     }
 
     Facebook.doGraphPathRequest = function(accessToken, graphPath, doneCallback){   
 
-        console.log("### accessToken.getPermissions()=" + accessToken.getPermissions())
-        //var graphPath = "/me/books.reads"
-        
-        var self = this
-        var request = com.facebook.GraphRequest.newGraphPathRequest(accessToken, graphPath, new com.facebook.GraphRequest.GraphJSONArrayCallback({        
-            onCompleted: function(entities, graphResponse) {
+        try{
+            console.log("### accessToken.getPermissions()=" + accessToken.getPermissions())
+            //var graphPath = "/me/books.reads"
+            
+            var self = this
+            var request = com.facebook.GraphRequest.newGraphPathRequest(accessToken, graphPath, new com.facebook.GraphRequest.GraphJSONArrayCallback({        
+                onCompleted: function(entities, graphResponse) {
 
-                if(graphResponse.getError()){
-                    self.handlerError(graphResponse.getError())
-                }else{                    
-                    doneCallback(entities)            
+                    if(graphResponse.getError()){
+                        self.handlerError(graphResponse.getError())
+                    }else{                    
+                        doneCallback(entities)            
+                    }
                 }
-            }
-        }))
+            }))
 
-        request.executeAsync()
+            request.executeAsync()
+        }catch(error){
+            console.log(error)
+            this._failCallback(error)
+        }
     }    
 
 
@@ -255,6 +274,49 @@ var Facebook = function(){
     }
 
     return Facebook
+}
+
+function toJson(entity){
+
+    console.log("## toJson " + entity)
+
+    var keys = entity.keys()
+    var json = {}    
+    
+    console.log("## toJson key=" + key)
+
+    while(keys.hasNext()){
+
+        var key = keys.next()
+
+        console.log("## toJson key=" + key)
+
+        json[key] = entity.opt(key).toString()        
+    }
+
+    return json
+}
+
+function toJsonrray(entities){
+
+    var jsonArray = []
+
+    for(var j = 0; j < entities.length(); j++){
+        
+        var entity = entities[j]
+        var keys = entity.keys()
+        var json = {}
+        
+        while(keys.hasNext()){
+            var key = keys.next()
+
+            json[key] = entity.opt(key).toString()        
+        }
+
+        jsonArray.push(json)
+    }
+
+    return jsonArray
 }
 
 exports.Facebook = Facebook
