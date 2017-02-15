@@ -87,7 +87,7 @@ var Facebook = function(){
     // args = { fields, doneCallback}
     Facebook.requestUserProfile = function(args){   
 
-        //console.log("### accessToken.getPermissions()=" + accessToken.getPermissions())
+        console.log("## requestUserProfile")
 
         var parameters = new android.os.Bundle();
         if(args.fields)
@@ -102,17 +102,41 @@ var Facebook = function(){
         })   
     }
 
-    Facebook.requestBooks = function(fields, doneCallback){   
-
-        //console.log("### accessToken.getPermissions()=" + accessToken.getPermissions())
+    Facebook.requestBooks = function(fields, callback){   
 
         var graphPath = "/me/books.reads"
         var accessToken = this.getAcessToken()
 
-        this.doGraphPathRequest(accessToken, graphPath, function(entities){
-            var json = toJsonrray(entities)        
-            doneCallback(json)
-        })   
+        this.doGraphPathRequest(accessToken, graphPath, undefined, function(graphResponse){
+            var json = graphResponse.getJSONObject()
+            var array = json.getJSONArray('data')
+            var results = toJsonrray(array)
+            callback(results)                
+        })
+
+    }     
+
+    Facebook.requestFriends = function(args){   
+
+        var userId = args.userId
+        var converter = args.converter
+        var callback = args.callback
+        var fields = args.fields
+
+        var bundle = new android.os.Bundle();        
+        bundle.putString("fields", fields);            
+
+        var graphPath = "/" + userId + "/friends"
+        var accessToken = this.getAcessToken()
+
+        this.doGraphPathRequest(accessToken, graphPath, bundle, function(graphResponse){
+            var json = graphResponse.getJSONObject()
+            var array = json.getJSONArray('data')
+            var results = toJsonrray(array)
+            callback(results)                
+        })
+
+       
     }     
 
     //url, title, content, imageUrl
@@ -207,7 +231,7 @@ var Facebook = function(){
         return builder.build();     
     }  
 
-    Facebook.doMeRequest = function(accessToken, budle, doneCallback){   
+    Facebook.doMeRequest = function(accessToken, bundle, callback){   
 
         try{
             console.log("### accessToken.getPermissions()=" + accessToken.getPermissions())
@@ -221,13 +245,13 @@ var Facebook = function(){
                     if(graphResponse.getError()){                    
                         self.handlerError(graphResponse.getError())
                     }else{
-                        doneCallback(entity)            
+                        callback(entity)            
                     }
                 }
             }))
 
-            if(budle)
-                request.setParameters(budle);
+            if(bundle)
+                request.setParameters(bundle);
 
             request.executeAsync()
         }catch(error){
@@ -236,25 +260,30 @@ var Facebook = function(){
         }
     }
 
-    Facebook.doGraphPathRequest = function(accessToken, graphPath, doneCallback){   
+    Facebook.doGraphPathRequest = function(accessToken, graphPath, bundle, callback){   
 
         try{
-            console.log("### accessToken.getPermissions()=" + accessToken.getPermissions())
-            //var graphPath = "/me/books.reads"
-            
+
             var self = this
-            var request = com.facebook.GraphRequest.newGraphPathRequest(accessToken, graphPath, new com.facebook.GraphRequest.GraphJSONArrayCallback({        
-                onCompleted: function(entities, graphResponse) {
+            var request = com.facebook.GraphRequest.newGraphPathRequest(accessToken, graphPath, new com.facebook.GraphRequest.Callback({        
+                onCompleted: function(graphResponse) {
+
+                    console.log("## requestFriends " + graphResponse)
 
                     if(graphResponse.getError()){
                         self.handlerError(graphResponse.getError())
                     }else{                    
-                        doneCallback(entities)            
+                        callback(graphResponse)
                     }
                 }
             }))
 
+            if(bundle)
+                request.setParameters(bundle);
+
             request.executeAsync()
+
+
         }catch(error){
             console.log(error)
             this._failCallback(error)
@@ -278,20 +307,22 @@ var Facebook = function(){
 
 function toJson(entity){
 
-    console.log("## toJson " + entity)
-
     var keys = entity.keys()
     var json = {}    
     
-    console.log("## toJson key=" + key)
-
     while(keys.hasNext()){
 
         var key = keys.next()
+        var jobject = entity.optJSONObject(key)
+        var jarray = entity.optJSONArray(key)
 
-        console.log("## toJson key=" + key)
-
-        json[key] = entity.opt(key).toString()        
+        if(jobject){
+            json[key] = toJson(jobject)
+        } else if(jarray){
+            json[key] = toJsonrray(jarray)
+        } else {
+            json[key] = entity.get(key).toString()
+        }    
     }
 
     return json
@@ -303,16 +334,8 @@ function toJsonrray(entities){
 
     for(var j = 0; j < entities.length(); j++){
         
-        var entity = entities[j]
-        var keys = entity.keys()
-        var json = {}
-        
-        while(keys.hasNext()){
-            var key = keys.next()
-
-            json[key] = entity.opt(key).toString()        
-        }
-
+        var entity = entities.get(j)
+        var json = toJson(entity)
         jsonArray.push(json)
     }
 
