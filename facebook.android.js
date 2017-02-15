@@ -1,10 +1,17 @@
-var applicationModule = require("application");
-var _AndroidApplication = applicationModule.android;
+var application = require("application");
 
 var Facebook = function(){
     
     Facebook.logInWithPublishPermissions = function(permissions) {
         if (this._isInit) {
+
+            var self = this
+            var previesResult = application.android.onActivityResult            
+            application.android.onActivityResult = function (requestCode, resultCode, data) {
+                application.android.onActivityResult = previesResult
+                self.mCallbackManager.onActivityResult(requestCode, resultCode, data);
+            };
+
             var javaPermissions = java.util.Arrays.asList(permissions);
             this.loginManager.logInWithPublishPermissions(this._act, javaPermissions);
         }
@@ -12,8 +19,16 @@ var Facebook = function(){
 
     Facebook.logInWithReadPermissions = function(permissions) {
         if (this._isInit) {
+
+            var self = this
+            var previesResult = application.android.onActivityResult            
+            application.android.onActivityResult = function (requestCode, resultCode, data) {
+                application.android.onActivityResult = previesResult
+                self.mCallbackManager.onActivityResult(requestCode, resultCode, data);
+            };
+
             var javaPermissions = java.util.Arrays.asList(permissions);
-            this.loginManager.logInWithReadPermissions(this._act, javaPermissions);
+            this.loginManager.logInWithReadPermissions(application.android.currentContext, javaPermissions);
         }
     }    
 
@@ -27,8 +42,9 @@ var Facebook = function(){
 
 
     Facebook.logout = function(){
-        if(this._isInit)
+        if(this._isInit){
             this.loginManager.logOut();
+        }
     }
 
     Facebook.initSdk = function(loginBehavior){
@@ -37,7 +53,7 @@ var Facebook = function(){
             return true
 
         try {
-            com.facebook.FacebookSdk.sdkInitialize(_AndroidApplication.context.getApplicationContext());
+            com.facebook.FacebookSdk.sdkInitialize(application.android.context.getApplicationContext());
         }catch (error) {
             console.log("nativescript-facebook-login: The plugin could not find the android library, try to clean the android platform. " + error);
         }
@@ -64,7 +80,7 @@ var Facebook = function(){
 
         if (this._isInit) {            
             var self = this
-            this._act = _AndroidApplication.foregroundActivity || _AndroidApplication.startActivity;
+            this._act = application.android.foregroundActivity || application.android.startActivity;
             
             this.loginManager.registerCallback(this.mCallbackManager, new com.facebook.FacebookCallback({
                 onSuccess: function (result) {
@@ -77,10 +93,7 @@ var Facebook = function(){
                     self._failCallback(e);
                 }
             }));
-            
-            this._act.onActivityResult = function (requestCode, resultCode, data) {
-                self.mCallbackManager.onActivityResult(requestCode, resultCode, data);
-            };
+                  
         }        
     }   
 
@@ -142,7 +155,7 @@ var Facebook = function(){
     //url, title, content, imageUrl
     Facebook.share = function(params){
         try{
-            var activity = _AndroidApplication.foregroundActivity
+            var activity = application.android.foregroundActivity
             var builder = new com.facebook.share.model.ShareLinkContent.Builder()            
             
             if(params.url)
@@ -169,7 +182,7 @@ var Facebook = function(){
     // imagePath, content, imageUrl
     Facebook.sharePhoto = function(params){
         try{
-            var activity = _AndroidApplication.foregroundActivity
+            var activity = application.android.foregroundActivity
         
             var builder = new com.facebook.share.model.SharePhotoContent().Builder()
             var photo = this.createPhotoShare(params)
@@ -185,7 +198,7 @@ var Facebook = function(){
     // list of {imagePath, content, imageUrl}
     Facebook.sharePhotos = function(args){
         try{
-            var activity = _AndroidApplication.foregroundActivity
+            var activity = application.android.foregroundActivity
             
             var builder = new com.facebook.share.model.SharePhotoContent().Builder()
             var photos = []
