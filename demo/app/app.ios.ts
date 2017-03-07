@@ -21,8 +21,12 @@ class MyDelegate extends UIResponder implements UIApplicationDelegate {
  
   applicationDidEnterBackground(application: UIApplication): void {
     //Do something you want here
-  }
+  }  
 }
  
 application.ios.delegate = MyDelegate;
 application.start({ moduleName: "main-page" });
+
+
+
+

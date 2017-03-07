@@ -3,16 +3,19 @@ var _AndroidApplication = applicationModule.android;
 
 var Facebook = function(){
     
+    var default_permissions = ["public_profile", "email"]
+    var default_fileds = "id,name,email"
+
     Facebook.logInWithPublishPermissions = function(permissions) {
         if (this._isInit) {
-            var javaPermissions = java.util.Arrays.asList(permissions);
+            var javaPermissions = java.util.Arrays.asList(permissions || default_permissions);
             this.loginManager.logInWithPublishPermissions(this._act, javaPermissions);
         }
     }
 
     Facebook.logInWithReadPermissions = function(permissions) {
         if (this._isInit) {
-            var javaPermissions = java.util.Arrays.asList(permissions);
+            var javaPermissions = java.util.Arrays.asList(permissions || default_permissions);
             this.loginManager.logInWithReadPermissions(this._act, javaPermissions);
         }
     }    
@@ -89,9 +92,11 @@ var Facebook = function(){
 
         //console.log("### accessToken.getPermissions()=" + accessToken.getPermissions())
 
+        args = args || { fields: default_fileds }
+        
         var parameters = new android.os.Bundle();
         if(args.fields)
-            parameters.putString("fields", args.fields);    
+            parameters.putString("fields", args.fields || default_fileds);    
 
         var accessToken = this.getAcessToken()
 

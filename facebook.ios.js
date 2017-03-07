@@ -2,33 +2,31 @@ var application = require('application')
 
 var Facebook = function(){
 
+    var default_permissions = ["public_profile", "email"]
+    var default_fileds = "id,name,email"
+
     Facebook.logInWithPublishPermissions = function(permissions){
         if(this._isInit){
-            this.loginManager.logInWithPublishPermissionsHandler(permissions, this._callbackManager);
+            this.loginManager.logInWithPublishPermissionsHandler(permissions || default_permissions, this._callbackManager);
         }
     }
 
     Facebook.logInWithReadPermissions = function(permissions){
         if (this._isInit) {
-            this.loginManager.logInWithReadPermissionsHandler(permissions, this._callbackManager);
+            this.loginManager.logInWithReadPermissionsHandler(permissions || default_permissions, this._callbackManager);
         }        
     }
 
     Facebook.getAccessToken = function(){
-        console.log("getAccessToken")
         var accessToken = FBSDKAccessToken.currentAccessToken()
-
-        console.log("getAccessToken accessToken=" + accessToken)
-
         return accessToken
     }
 
-    Facebook.isLoggedIn = function(){
-        console.log("isLoggedIn")
+    Facebook.isLoggedIn = function(){        
         return this.getAccessToken() != null
     }
 
-    Facebook.logout = function(){
+    Facebook.logOut = function(){
         if(this._init)
             this.loginManager.logOut();
     }
@@ -65,7 +63,7 @@ var Facebook = function(){
                     return;
                 }
 
-                console.log("## result=" + result)
+                //console.log("## result=" + result)
 
                 if (result.isCancelled) {
                     self._cancelCallback();
@@ -85,12 +83,14 @@ var Facebook = function(){
     // args = {fields , doneCallback }
     Facebook.requestUserProfile = function(args){   
 
+        args = args || { fields: default_fileds }
+
         this.doMeRequest({
             params: {
-                fields: args.fields || {}
+                fields: args.fields || { fields: default_fileds }
             },
             doneCallback: function(result){            
-                console.log("## result=" + result)
+                //console.log("## result=" + result)
                 args.doneCallback({
                     email: result.objectForKey('email'),
                     id: result.objectForKey('id'),
