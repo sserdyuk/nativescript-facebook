@@ -3,8 +3,13 @@
   "version": "0.0.1", 
   "nativescript": {
     "platforms": {
+<<<<<<< HEAD
       "ios": "1.7.0",
     "android": "1.7.0"
+=======
+      "ios": "3.3.0",
+    	"android": "2.3.0"
+>>>>>>> ad66aee7a8441962fc54858c1cfef8eaaee5d7ae
     }
   }
 }
