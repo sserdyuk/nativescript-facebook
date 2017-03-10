@@ -105,15 +105,19 @@ var Facebook = function(){
 
         args.fields = args.fields || default_fileds
 
-        var parameters = new android.os.Bundle();
-        parameters.putString("fields", args.fields);
+        var bundle = new android.os.Bundle();
+        bundle.putString("fields", args.fields);
 
         var accessToken = this.getAcessToken()
 
-        this.doMeRequest(accessToken, parameters, function(fbUser){
-            var json = toJson(fbUser)
-            json.token = accessToken.getToken()
-            args.callback(json)
+        this.doMeRequest({
+            accessToken: accessToken, 
+            bundle: bundle, 
+            callback: function(fbUser){
+                var json = toJson(fbUser)
+                json.token = accessToken.getToken()
+                args.callback(json)
+            }            
         })
     }
 
