@@ -68,14 +68,14 @@
 	  <dict>
 	  <key>CFBundleURLSchemes</key>
 	  <array>
-	    <string>fb1011519068868491</string>
+	    <string>fb407610712932791</string>
 	  </array>
 	  </dict>
 	</array>
 	<key>FacebookAppID</key>
-	<string>1011519068868491</string>
+	<string>407610712932791</string>
 	<key>FacebookDisplayName</key>
-	<string>SigTurismo App</string>
+	<string>NativeScript Plugin</string>
 
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
@@ -92,6 +92,8 @@
 		<string>fbauth</string>
 		<string>fbauth2</string>
 		<string>fb-messenger-api20140430</string>
+		<string>fbshareextension</string>
+		<string>fb-messenger-api</string>
 	</array>
 
 	<key>LSRequiresIPhoneOS</key>
@@ -101,6 +103,6 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
-	
+
 </dict>
 </plist>

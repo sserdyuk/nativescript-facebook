@@ -5,7 +5,8 @@
 }
 
 button {
-    font-size: 42;
+    font-size: 25;
+    margin-top: 15;
     horizontal-align: center;
 }
 

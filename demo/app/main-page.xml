@@ -1,16 +1,22 @@
 <Page xmlns="http://schemas.nativescript.org/tns.xsd" loaded="loaded">
-  <StackLayout>
-    
-    <Label text="Facebook login" class="title"/>
-    <Button text="Login" tap="onLogin" />
+  <ScrollView>
 
-    
+    <StackLayout>
 
-    <Button text="Share Text" tap="onShare" />
+      <Label text="Facebook login" class="title"/>
+      <Button text="Login" tap="onLogin" />
 
-    <Button text="Share Image" tap="onSharePhoto" />
 
-    <Label text="{{ message }}" class="message" textWrap="true"/>
 
-  </StackLayout>
+      <Button text="Share Text" tap="onShare" />
+
+      <Button text="Share Image" tap="onSharePhoto" />
+
+      <Button text="Get Friends" tap="onFriends" />
+
+      <Label text="{{ message }}" class="message" textWrap="true"/>
+
+    </StackLayout>
+
+  </ScrollView>
 </Page>

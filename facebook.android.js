@@ -2,6 +2,9 @@ var application = require("application");
 
 var Facebook = function(){
 
+    var default_permissions = ["public_profile", "email"]
+    var default_fileds = "id,name,email"
+
     Facebook.logInWithPublishPermissions = function(permissions) {
         if (this._isInit) {
 
@@ -12,7 +15,7 @@ var Facebook = function(){
                 self.mCallbackManager.onActivityResult(requestCode, resultCode, data);
             };
 
-            var javaPermissions = java.util.Arrays.asList(permissions);
+            var javaPermissions = java.util.Arrays.asList(permissions || default_permissions);
             this.loginManager.logInWithPublishPermissions(this._act, javaPermissions);
         }
     }
@@ -27,7 +30,7 @@ var Facebook = function(){
                 self.mCallbackManager.onActivityResult(requestCode, resultCode, data);
             };
 
-            var javaPermissions = java.util.Arrays.asList(permissions);
+            var javaPermissions = java.util.Arrays.asList(permissions || default_permissions);
             this.loginManager.logInWithReadPermissions(application.android.currentContext, javaPermissions);
         }
     }
@@ -97,34 +100,40 @@ var Facebook = function(){
         }
     }
 
-    // args = { fields, doneCallback}
+    // args = { fields, callback}
     Facebook.requestUserProfile = function(args){
 
-        console.log("## requestUserProfile")
+        args.fields = args.fields || default_fileds
 
         var parameters = new android.os.Bundle();
-        if(args.fields)
-            parameters.putString("fields", args.fields);
+        parameters.putString("fields", args.fields);
 
         var accessToken = this.getAcessToken()
 
         this.doMeRequest(accessToken, parameters, function(fbUser){
             var json = toJson(fbUser)
             json.token = accessToken.getToken()
-            args.doneCallback(json)
+            args.callback(json)
         })
     }
 
-    Facebook.requestBooks = function(fields, callback){
+    Facebook.requestBooks = function(args){
+
+        var fields = args.fields
+        var callback = args.callback
 
         var graphPath = "/me/books.reads"
         var accessToken = this.getAcessToken()
 
-        this.doGraphPathRequest(accessToken, graphPath, undefined, function(graphResponse){
-            var json = graphResponse.getJSONObject()
-            var array = json.getJSONArray('data')
-            var results = toJsonrray(array)
-            callback(results)
+        this.doGraphPathRequest({
+          accessToken: accessToken,
+          graphPath: graphPath,
+          function(graphResponse){
+              var json = graphResponse.getJSONObject()
+              var array = json.getJSONArray('data')
+              var results = toJsonrray(array)
+              callback(results)
+          }
         })
 
     }
@@ -132,9 +141,13 @@ var Facebook = function(){
     Facebook.requestFriends = function(args){
 
         var userId = args.userId
-        var converter = args.converter
         var callback = args.callback
         var fields = args.fields
+
+        if(!userId || userId.trim().length == 0){
+          this._failCallback("facebook user id cannot be null to this request")
+          return
+        }
 
         var bundle = new android.os.Bundle();
         bundle.putString("fields", fields);
@@ -142,11 +155,16 @@ var Facebook = function(){
         var graphPath = "/" + userId + "/friends"
         var accessToken = this.getAcessToken()
 
-        this.doGraphPathRequest(accessToken, graphPath, bundle, function(graphResponse){
-            var json = graphResponse.getJSONObject()
-            var array = json.getJSONArray('data')
-            var results = toJsonrray(array)
-            callback(results)
+        this.doGraphPathRequest({
+          accessToken: accessToken,
+          graphPath: graphPath,
+          bundle: bundle,
+          callback :function(graphResponse){
+              var json = graphResponse.getJSONObject()
+              var array = json.getJSONArray('data')
+              var results = toJsonrray(array)
+              callback(results)
+          }
         })
 
 
@@ -244,16 +262,17 @@ var Facebook = function(){
         return builder.build();
     }
 
-    Facebook.doMeRequest = function(accessToken, bundle, callback){
+    Facebook.doMeRequest = function(args){
+
+        var accessToken = args.accessToken
+        var bundle = args.bundle
+        var callback = args.callback
 
         try{
-            console.log("### accessToken.getPermissions()=" + accessToken.getPermissions())
 
             var self = this
             var request = com.facebook.GraphRequest.newMeRequest(accessToken, new com.facebook.GraphRequest.GraphJSONObjectCallback({
                 onCompleted: function(entity, graphResponse) {
-
-                    console.log("## Facebook onCompleted")
 
                     if(graphResponse.getError()){
                         self.handlerError(graphResponse.getError())
@@ -273,15 +292,18 @@ var Facebook = function(){
         }
     }
 
-    Facebook.doGraphPathRequest = function(accessToken, graphPath, bundle, callback){
+    Facebook.doGraphPathRequest = function(args){
+
+      var accessToken = args.accessToken
+      var graphPath = args.graphPath
+      var bundle = args.bundle
+      var callback = args.callback
 
         try{
 
             var self = this
             var request = com.facebook.GraphRequest.newGraphPathRequest(accessToken, graphPath, new com.facebook.GraphRequest.Callback({
                 onCompleted: function(graphResponse) {
-
-                    console.log("## requestFriends " + graphResponse)
 
                     if(graphResponse.getError()){
                         self.handlerError(graphResponse.getError())
