@@ -63,6 +63,8 @@ application.start({ moduleName: "main-page" });
 
 Add AndroidManifest.xml
 
+* add xmlns:tools="http://schemas.android.com/tools" in manifest tag
+
 ```  
 <activity         
     android:name="com.facebook.FacebookActivity"
@@ -80,27 +82,9 @@ strings.xml
 <string name='facebook_app_id'>{appid}</string>
 ```
 
-app.gradle
-
-```
-buildscript {
-  repositories {
-    jcenter()
-  }
-
-  dependencies {
-    classpath 'com.android.tools.build:gradle:2.0.0-alpha3'
-  }
-}
-  
-dependencies{
-  compile "com.android.support:recyclerview-v7:22.2.0"
-}
-```
-
 ### Using
 
-example in ./demo
+example in demo folder
 ```
 var Facebook = require("nativescript-facebook").Facebook
 
@@ -109,7 +93,9 @@ var facebookApi
 
 var FacebookHandler = function(){
 
-	var permissions = ["public_profile", "email"]
+	var permissions = ["public_profile", "email", "user_friends", "user_birthday"]
+	var fields = "id,name,email,birthday,gender,cover,picture"
+	var userId
 
 	FacebookHandler.init = function(){
 		if(!facebookApi){
@@ -129,14 +115,27 @@ var FacebookHandler = function(){
 
 		facebookApi.requestUserProfile({
 			fields: fields,
-			doneCallback: function(fbUser){
+			callback: function(fbUser){
 
-			viewModel.set("message", "Login success: " + JSON.stringify(fbUser))
-
+				viewModel.set("message", "Login success: " + JSON.stringify(fbUser))
+				userId = fbUser.id
 			}
 		})
 
 	}
+	
+	FacebookHandler.onFriends = function () {
+		
+		facebookApi.requestFriends({
+			fields: fields,
+			userId: userId,
+			callback: function(friends){
+
+				viewModel.set("message", "Friends list: " + JSON.stringify(friends))
+
+			}
+		})
+	}	
 
 	FacebookHandler.share = function(){
 		if(facebookApi.isLoggedIn()){
