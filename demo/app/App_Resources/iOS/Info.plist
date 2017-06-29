@@ -68,12 +68,12 @@
 	  <dict>
 	  <key>CFBundleURLSchemes</key>
 	  <array>
-	    <string>fb407610712932791</string>
+	    <string>fb1943164295959537</string>
 	  </array>
 	  </dict>
 	</array>
 	<key>FacebookAppID</key>
-	<string>407610712932791</string>
+	<string>1943164295959537</string>
 	<key>FacebookDisplayName</key>
 	<string>NativeScript Plugin</string>
 

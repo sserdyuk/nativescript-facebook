@@ -3,7 +3,8 @@
     <string name="title_activity_kimera">NativeScript Facebook Plugin</string>
     <string name="app_name">NativeScript Facebook Plugin</string>
 
-    <string name="facebook_app_id">407610712932791</string>
+    <string name="facebook_app_id">1943164295959537</string>
+    <string name="fb_login_protocol_scheme">fb1943164295959537</string>
     
 
 </resources>
