@@ -8,12 +8,16 @@ var Facebook = function(){
     Facebook.logInWithPublishPermissions = function(permissions) {
         if (this._isInit) {
 
-            var self = this
-            var previesResult = application.android.onActivityResult
-            application.android.onActivityResult = function (requestCode, resultCode, data) {
-                application.android.onActivityResult = previesResult
-                self.mCallbackManager.onActivityResult(requestCode, resultCode, data);
+            var self = this;
+            var onActivityResult = function (args) {
+                if (self.mCallbackManager.onActivityResult(args.requestCode, args.resultCode, args.intent)) {
+                    unsubscribe();
+                }
             };
+            var unsubscribe = function () {
+                application.android.off(application.AndroidApplication.activityResultEvent, onActivityResult);
+            };
+            application.android.on(application.AndroidApplication.activityResultEvent, onActivityResult);
 
             var javaPermissions = java.util.Arrays.asList(permissions || default_permissions);
             this.loginManager.logInWithPublishPermissions(this._act, javaPermissions);
@@ -23,15 +27,20 @@ var Facebook = function(){
     Facebook.logInWithReadPermissions = function(permissions) {
         if (this._isInit) {
 
-            var self = this
-            var previesResult = application.android.onActivityResult
-            application.android.onActivityResult = function (requestCode, resultCode, data) {
-                application.android.onActivityResult = previesResult
-                self.mCallbackManager.onActivityResult(requestCode, resultCode, data);
+            var self = this;
+            var onActivityResult = function (args) {
+                if (self.mCallbackManager.onActivityResult(args.requestCode, args.resultCode, args.intent)) {
+                    unsubscribe();
+                }
             };
+            var unsubscribe = function () {
+                application.android.off(application.AndroidApplication.activityResultEvent, onActivityResult);
+            };
+            application.android.on(application.AndroidApplication.activityResultEvent, onActivityResult);
 
             var javaPermissions = java.util.Arrays.asList(permissions || default_permissions);
-            this.loginManager.logInWithReadPermissions(application.android.currentContext, javaPermissions);
+            // this.loginManager.logInWithReadPermissions(application.android.currentContext, javaPermissions);
+            this.loginManager.logInWithReadPermissions(this._act, javaPermissions);
         }
     }
 
@@ -56,6 +65,7 @@ var Facebook = function(){
             return true
 
         try {
+            // com.facebook.FacebookSdk.setAutoLogAppEventsEnabled(true);
             com.facebook.FacebookSdk.sdkInitialize(application.android.context.getApplicationContext());
         }catch (error) {
             console.log("nativescript-facebook-login: The plugin could not find the android library, try to clean the android platform. " + error);
