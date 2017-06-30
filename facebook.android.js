@@ -44,12 +44,12 @@ var Facebook = function(){
         }
     }
 
-    Facebook.getAcessToken = function(){
+    Facebook.getAccessToken = function(){
         return com.facebook.AccessToken.getCurrentAccessToken();
     }
 
     Facebook.isLoggedIn = function(){
-        return this.getAcessToken() != null
+        return this.getAccessToken() != null
     }
 
 
@@ -122,7 +122,7 @@ var Facebook = function(){
         var bundle = new android.os.Bundle();
         bundle.putString("fields", args.fields);
 
-        var accessToken = this.getAcessToken()
+        var accessToken = this.getAccessToken()
 
         this.doMeRequest({
             accessToken: accessToken, 
@@ -141,7 +141,7 @@ var Facebook = function(){
         var callback = args.callback
 
         var graphPath = "/me/books.reads"
-        var accessToken = this.getAcessToken()
+        var accessToken = this.getAccessToken()
 
         this.doGraphPathRequest({
           accessToken: accessToken,
@@ -171,7 +171,7 @@ var Facebook = function(){
         bundle.putString("fields", fields);
 
         var graphPath = "/" + userId + "/friends"
-        var accessToken = this.getAcessToken()
+        var accessToken = this.getAccessToken()
 
         this.doGraphPathRequest({
           accessToken: accessToken,
