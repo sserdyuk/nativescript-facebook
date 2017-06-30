@@ -20,7 +20,7 @@ var Facebook = function(){
             application.android.on(application.AndroidApplication.activityResultEvent, onActivityResult);
 
             var javaPermissions = java.util.Arrays.asList(permissions || default_permissions);
-            this.loginManager.logInWithPublishPermissions(this._act, javaPermissions);
+            this.loginManager.logInWithPublishPermissions(application.android.foregroundActivity, javaPermissions);
         }
     }
 
@@ -40,7 +40,7 @@ var Facebook = function(){
 
             var javaPermissions = java.util.Arrays.asList(permissions || default_permissions);
             // this.loginManager.logInWithReadPermissions(application.android.currentContext, javaPermissions);
-            this.loginManager.logInWithReadPermissions(this._act, javaPermissions);
+            this.loginManager.logInWithReadPermissions(application.android.foregroundActivity, javaPermissions);
         }
     }
 
@@ -73,6 +73,7 @@ var Facebook = function(){
 
         this.mCallbackManager = com.facebook.CallbackManager.Factory.create();
         this.loginManager = com.facebook.login.LoginManager.getInstance();
+        this.shareDialog = new com.facebook.share.widget.ShareDialog(application.android.foregroundActivity);
 
         if (loginBehavior)
             this.loginManager = this.loginManager.setLoginBehavior(loginBehavior);
@@ -87,26 +88,29 @@ var Facebook = function(){
     }
 
     Facebook.registerCallback = function(successCallback, cancelCallback, failCallback){
-        this._failCallback  = failCallback
-        this._successCallback  = successCallback
-        this._cancelCallback = cancelCallback
-
         if (this._isInit) {
-            var self = this
-            this._act = application.android.foregroundActivity || application.android.startActivity;
-
             this.loginManager.registerCallback(this.mCallbackManager, new com.facebook.FacebookCallback({
                 onSuccess: function (result) {
-                    self._successCallback(result);
+                    successCallback(result);
                 },
                 onCancel: function () {
-                    self._cancelCallback();
+                    cancelCallback();
                 },
                 onError: function (e) {
-                    self._failCallback(e);
+                    failCallback(e);
                 }
             }));
-
+            this.shareDialog.registerCallback(this.mCallbackManager, new com.facebook.FacebookCallback({
+                onSuccess: function (result) {
+                    successCallback(result);
+                },
+                onCancel: function () {
+                    cancelCallback();
+                },
+                onError: function (e) {
+                    failCallback(e);
+                }
+            }));
         }
     }
 
@@ -187,94 +191,98 @@ var Facebook = function(){
     //url, title, content, imageUrl
     Facebook.share = function(params){
         try{
-            var activity = application.android.foregroundActivity
-            var builder = new com.facebook.share.model.ShareLinkContent.Builder()
+            var builder = new com.facebook.share.model.ShareLinkContent.Builder();
 
             if(params.url)
                 builder.setContentUrl(android.net.Uri.parse(params.url))
 
-            if(params.title)
-                builder.setContentTitle(params.title)
-
-            if(params.imageUrl)
-                builder.setImageUrl(android.net.Uri.parse(params.imageUrl))
-
-            if(params.content)
-                builder.setContentDescription(params.content)
+            if(params.ref)
+                builder.setRef(params.ref)
 
             var content = builder.build();
 
-            com.facebook.share.widget.ShareDialog.show(activity, content)
+            var self = this;
+            var onActivityResult = function (args) {
+                if (self.mCallbackManager.onActivityResult(args.requestCode, args.resultCode, args.intent)) {
+                    unsubscribe();
+                }
+            };
+            var unsubscribe = function () {
+                application.android.off(application.AndroidApplication.activityResultEvent, onActivityResult);
+            };
+            application.android.on(application.AndroidApplication.activityResultEvent, onActivityResult);
+
+            this.shareDialog.show(content)
         }catch(error){
             console.log(error)
             this._failCallback(error)
         }
     }
 
-    // imagePath, content, imageUrl
-    Facebook.sharePhoto = function(params){
-        try{
-            var activity = application.android.foregroundActivity
+    // // imagePath, content, imageUrl
+    // Facebook.sharePhoto = function(params){
+    //     try{
+    //         var activity = application.android.foregroundActivity
 
-            var builder = new com.facebook.share.model.SharePhotoContent().Builder()
-            var photo = this.createPhotoShare(params)
-            var content = builder.addPhoto(photo).build();
+    //         var builder = new com.facebook.share.model.SharePhotoContent().Builder()
+    //         var photo = this.createPhotoShare(params)
+    //         var content = builder.addPhoto(photo).build();
 
-            com.facebook.share.widget.ShareDialog.show(activity, content)
-        }catch(error){
-            console.log(error)
-            this._failCallback(error)
-        }
-    }
+    //         com.facebook.share.widget.ShareDialog.show(activity, content)
+    //     }catch(error){
+    //         console.log(error)
+    //         this._failCallback(error)
+    //     }
+    // }
 
-    // list of {imagePath, content, imageUrl}
-    Facebook.sharePhotos = function(args){
-        try{
-            var activity = application.android.foregroundActivity
+    // // list of {imagePath, content, imageUrl}
+    // Facebook.sharePhotos = function(args){
+    //     try{
+    //         var activity = application.android.foregroundActivity
 
-            var builder = new com.facebook.share.model.SharePhotoContent().Builder()
-            var photos = []
+    //         var builder = new com.facebook.share.model.SharePhotoContent().Builder()
+    //         var photos = []
 
-            for(var i in args.list){
-                photos.push(this.createPhotoShare(args.list[i]))
-            }
+    //         for(var i in args.list){
+    //             photos.push(this.createPhotoShare(args.list[i]))
+    //         }
 
-            for(var i in photos)
-                builder.addPhoto(photos[i])
+    //         for(var i in photos)
+    //             builder.addPhoto(photos[i])
 
-            var content = builder.build();
+    //         var content = builder.build();
 
-            com.facebook.share.widget.ShareDialog.show(activity, content)
-        }catch(error){
-            console.log(error)
-            this._failCallback(error)
-        }
-    }
+    //         com.facebook.share.widget.ShareDialog.show(activity, content)
+    //     }catch(error){
+    //         console.log(error)
+    //         this._failCallback(error)
+    //     }
+    // }
 
-    Facebook.createPhotoShare = function(params){
-        var builder = new com.facebook.share.model.SharePhoto.Builder();
-        var bmOptions = new android.graphics.BitmapFactory.Options();
-        var bitmap
+    // Facebook.createPhotoShare = function(params){
+    //     var builder = new com.facebook.share.model.SharePhoto.Builder();
+    //     var bmOptions = new android.graphics.BitmapFactory.Options();
+    //     var bitmap
 
-        if(params.imagePath)
-            bitmap = android.graphics.BitmapFactory.decodeFile(params.imagePath, bmOptions);
+    //     if(params.imagePath)
+    //         bitmap = android.graphics.BitmapFactory.decodeFile(params.imagePath, bmOptions);
 
-        if(bitmap)
-            builder.setBitmap(bitmap);
+    //     if(bitmap)
+    //         builder.setBitmap(bitmap);
 
-        if(params.content)
-            builder.setCaption(params.content);
+    //     if(params.content)
+    //         builder.setCaption(params.content);
 
-        if(params.content)
-            builder.setCaption(params.content);
+    //     if(params.content)
+    //         builder.setCaption(params.content);
 
-        if(params.imageUrl)
-            builder.setImageUrl(android.net.Uri.parse(params.imageUrl))
+    //     if(params.imageUrl)
+    //         builder.setImageUrl(android.net.Uri.parse(params.imageUrl))
 
-        builder.setUserGenerated(true);
+    //     builder.setUserGenerated(true);
 
-        return builder.build();
-    }
+    //     return builder.build();
+    // }
 
     Facebook.doMeRequest = function(args){
 
