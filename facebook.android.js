@@ -53,7 +53,7 @@ var Facebook = function(){
     }
 
 
-    Facebook.logout = function(){
+    Facebook.logOut = function(){
         if(this._isInit){
             this.loginManager.logOut();
         }
