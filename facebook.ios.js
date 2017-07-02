@@ -95,23 +95,23 @@ var Facebook = function(){
         })
     }
 
-    Facebook.requestBooks = function(args){
+    // Facebook.requestBooks = function(args){
 
-        var fields = args.fields
-        var callback = args.callback
+    //     var fields = args.fields
+    //     var callback = args.callback
 
-        var args = {
-          graphPath: "/me/books.reads",
-          bundle: {
-            fields: fields
-          },
-          callback: function(graphResponse){
-            var json = toJson(result)
-            callback(json.data)
-          }
-        }
-        this.doGraphPathRequest(args)
-    }
+    //     var args = {
+    //       graphPath: "/me/books.reads",
+    //       bundle: {
+    //         fields: fields
+    //       },
+    //       callback: function(graphResponse){
+    //         var json = toJson(result)
+    //         callback(json.data)
+    //       }
+    //     }
+    //     this.doGraphPathRequest(args)
+    // }
 
     Facebook.requestFriends = function(args){
 
@@ -147,15 +147,8 @@ var Facebook = function(){
            if(params.url)
                 content.contentURL = NSURL.URLWithString(params.url)
 
-            if(params.title)
-                content.contentTitle = params.title
-
-            if(params.content)
-                content.contentDescription = params.content
-
-            if(params.imageUrl){
-                content.imageURL = NSURL.URLWithString(params.imageUrl)
-            }
+            if(params.ref)
+                content.ref = params.ref
 
             var view = application.ios.rootController
 
@@ -168,62 +161,62 @@ var Facebook = function(){
         }
     }
 
-    // imagePath, content, imageUrl
-    Facebook.sharePhoto = function(args){
-        try{
+    // // imagePath, content, imageUrl
+    // Facebook.sharePhoto = function(args){
+    //     try{
 
-            if(!this.isInstalled()){
-                this._failCallback("facebook app not installed")
-                return
-            }
+    //         if(!this.isInstalled()){
+    //             this._failCallback("facebook app not installed")
+    //             return
+    //         }
 
-            var content = FBSDKSharePhotoContent.alloc().init()
+    //         var content = FBSDKSharePhotoContent.alloc().init()
 
-            var photo = this.createPhotoShare(args)
-            content.photos = [photo];
-            var view = application.ios.rootController
-
-
-            var mydelegate = this.createSharingDelegate()
-
-            FBSDKShareDialog.showFromViewControllerWithContentDelegate(view, content, mydelegate);
-
-        }catch(error){
-            console.log("## error=" + error)
-            this._failCallback(error)
-        }
-    }
-
-    // args = list of {imagePath, content, imageUrl}
-    Facebook.sharePhotos = function(args){
-
-        try{
-
-            if(!this.isInstalled()){
-                this._failCallback("facebook app not installed")
-                return
-            }
-
-          var content = FBSDKSharePhotoContent.alloc().init()
-          var photos = []
-
-          for(var i in args.list){
-            photos.push(this.createPhotoShare(args.list[i]))
-          }
-
-          content.photos = photos;
+    //         var photo = this.createPhotoShare(args)
+    //         content.photos = [photo];
+    //         var view = application.ios.rootController
 
 
-          var view = application.ios.rootController
+    //         var mydelegate = this.createSharingDelegate()
 
-          var mydelegate = this.createSharingDelegate()
-          FBSDKShareDialog.showFromViewControllerWithContentDelegate(view, content, mydelegate);
+    //         FBSDKShareDialog.showFromViewControllerWithContentDelegate(view, content, mydelegate);
 
-        }catch(error){
-            console.log("## error=" + error)
-            this._failCallback(error)
-        }
-    }
+    //     }catch(error){
+    //         console.log("## error=" + error)
+    //         this._failCallback(error)
+    //     }
+    // }
+
+    // // args = list of {imagePath, content, imageUrl}
+    // Facebook.sharePhotos = function(args){
+
+    //     try{
+
+    //         if(!this.isInstalled()){
+    //             this._failCallback("facebook app not installed")
+    //             return
+    //         }
+
+    //       var content = FBSDKSharePhotoContent.alloc().init()
+    //       var photos = []
+
+    //       for(var i in args.list){
+    //         photos.push(this.createPhotoShare(args.list[i]))
+    //       }
+
+    //       content.photos = photos;
+
+
+    //       var view = application.ios.rootController
+
+    //       var mydelegate = this.createSharingDelegate()
+    //       FBSDKShareDialog.showFromViewControllerWithContentDelegate(view, content, mydelegate);
+
+    //     }catch(error){
+    //         console.log("## error=" + error)
+    //         this._failCallback(error)
+    //     }
+    // }
 
     Facebook.isInstalled = function(){
         var nsUrl = NSURL.URLWithString("fbapi://")
@@ -303,14 +296,14 @@ var Facebook = function(){
                 _super.apply(this, arguments);
             }
             MySharingDelegate.prototype.sharerDidCompleteWithResults = function (sharer, results) {
-                console.log("## delegate sharerDidCompleteWithResults")
+                self._successCallback(results)
             };
             MySharingDelegate.prototype.sharerDidFailWithError = function (sharer, error) {
-                console.log("## delegate sharerDidFailWithError " + error)
-                self._failCallback(error)
+                // self._failCallback(error)
+                self.handlerError(error)
             };
             MySharingDelegate.prototype.sharerDidCancel = function (sharer) {
-                console.log("## delegate sharerDidCancel")
+                self._cancelCallback()
             };
 
             MySharingDelegate.ObjCProtocols = [FBSDKSharingDelegate];
