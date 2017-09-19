@@ -135,26 +135,26 @@ var Facebook = function(){
         })
     }
 
-    Facebook.requestBooks = function(args){
+    // Facebook.requestBooks = function(args){
 
-        var fields = args.fields
-        var callback = args.callback
+    //     var fields = args.fields
+    //     var callback = args.callback
 
-        var graphPath = "/me/books.reads"
-        var accessToken = this.getAccessToken()
+    //     var graphPath = "/me/books.reads"
+    //     var accessToken = this.getAccessToken()
 
-        this.doGraphPathRequest({
-          accessToken: accessToken,
-          graphPath: graphPath,
-          function(graphResponse){
-              var json = graphResponse.getJSONObject()
-              var array = json.getJSONArray('data')
-              var results = toJsonrray(array)
-              callback(results)
-          }
-        })
+    //     this.doGraphPathRequest({
+    //       accessToken: accessToken,
+    //       graphPath: graphPath,
+    //       function(graphResponse){
+    //           var json = graphResponse.getJSONObject()
+    //           var array = json.getJSONArray('data')
+    //           var results = toJsonrray(array)
+    //           callback(results)
+    //       }
+    //     })
 
-    }
+    // }
 
     Facebook.requestFriends = function(args){
 
